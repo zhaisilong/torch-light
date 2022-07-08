@@ -2,7 +2,8 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 import torch.optim as optim
-import torch.autograd as autograd
+from tqdm.auto import tqdm
+
 
 CONTEXT_SIZE = 2  # 2 words to the left, 2 to the right
 EMBEDDING_DIM = 64
@@ -38,7 +39,7 @@ class CBOW(nn.Module):
         out = self.ebd(inputs).view(1, -1)
         out = F.relu(self.lr1(out))
         out = self.lr2(out)
-        out = F.log_softmax(out)
+        out = F.log_softmax(out, dim=-1)
         return out
 
     def _init_weight(self, scope=0.1):
@@ -51,7 +52,7 @@ class CBOW(nn.Module):
 def make_context_vector(context, word_to_ix):
     idxs = [word_to_ix[w] for w in context]
     tensor = torch.LongTensor(idxs)
-    return autograd.Variable(tensor)
+    return tensor
 
 loss_function = nn.NLLLoss()
 model = CBOW(vocab_size, EMBEDDING_DIM, CONTEXT_SIZE)
@@ -59,13 +60,17 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 for epoch in range(1, 41):
     total_loss = 0.0
-    for context, target in data:
-        v_ctx = make_context_vector(context, word_to_ix)
-        v_tar = autograd.Variable(torch.LongTensor([word_to_ix[target]]))
-        model.zero_grad()
-        out = model(v_ctx)
-        loss = loss_function(out, v_tar)
-        total_loss += loss.data
-        loss.backward()
-        optimizer.step()
-    print("end of epoch {} | loss {:2.3f}".format(epoch, total_loss[0]))
+    with tqdm(data, total=len(data), leave=False) as pbar:
+        for context, target in pbar:
+            v_ctx = make_context_vector(context, word_to_ix)
+            v_tar = torch.LongTensor([word_to_ix[target]])
+            model.zero_grad()
+            out = model(v_ctx)
+            loss = loss_function(out, v_tar)
+            total_loss += loss.item()
+            loss.backward()
+            optimizer.step()
+            pbar.set_description(
+                f'end of epoch {epoch} | loss {total_loss:2.3f}'
+            )
+

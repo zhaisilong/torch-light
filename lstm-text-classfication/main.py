@@ -1,6 +1,4 @@
 import argparse
-import time
-
 import torch
 from torch.autograd import Variable
 
@@ -47,6 +45,7 @@ args.max_len = data["max_len"]
 args.vocab_size = data['dict']['vocab_size']
 args.label_size = data['dict']['label_size']
 
+
 training_data = DataLoader(
              data['train']['src'],
              data['train']['label'],
@@ -78,7 +77,7 @@ criterion = torch.nn.CrossEntropyLoss()
 # Training
 # ##############################################################################
 import time
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 train_loss = []
 valid_loss = []

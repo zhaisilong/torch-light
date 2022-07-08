@@ -14,7 +14,7 @@ class DataLoader(object):
 
         self._batch_size = batch_size
         self._max_len = max_len
-        self._src_sents = np.asarray(src_sents)
+        self._src_sents = np.asarray(src_sents, dtype=object)
         self._label = np.asarray(label)
         if shuffle:
             self._shuffle()
